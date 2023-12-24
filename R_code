@@ -1,0 +1,72 @@
+# Display the coding scheme for the 'Presion' categorical variable.
+contrasts(Chapman.Cuali$Presion)
+
+# Display the coding scheme for the 'IMC' categorical variable.
+contrasts(Chapman.Cuali$IMC)
+
+# Fit a null logistic regression model (only an intercept, no predictors) for 'Coronarios'.
+Ajuste.0 <- glm(Coronarios ~ 1, data = Chapman.Cuali, family = binomial)
+
+# Fit a logistic regression model with 'Coronarios' as the response variable and 'Edad', 'Colesterol', 'Presion', and 'IMC' as predictors.
+Ajuste.All <- glm(Coronarios ~ Edad + Colesterol + Presion + IMC, data = Chapman.Cuali, family = binomial)
+
+# Perform stepwise model selection starting from the null model, considering adding or removing predictors.
+Ajuste.Step <- step(Ajuste.0, scope = list(lower = Coronarios ~ 1, upper = Coronarios ~ Edad + Colesterol + Presion + IMC), direction = "both")
+
+# Display a summary of the model selected by the stepwise procedure.
+summary(Ajuste.Step)
+
+# Retrieve the first 10 fitted values (predicted probabilities) from the stepwise-selected model.
+fitted.values(Ajuste.Step)[1:10]
+
+# Create a new data frame for prediction with specified values.
+Nuevo.Chapman <- data.frame(c(66, 66, 66), c(200, 220, 300), c("Normal", "Sobrepeso", "Normal"))
+names(Nuevo.Chapman) <- c("Edad", "Colesterol", "IMC")
+
+# Predict 'Coronarios' for the new data using the stepwise-selected model.
+predict(Ajuste.Step, type = "response", newdata = Nuevo.Chapman)
+
+# Load the ResourceSelection library for statistical functions.
+library(ResourceSelection)
+
+# Perform the Hosmer-Lemeshow goodness-of-fit test for the stepwise-selected model.
+hoslem.test(Chapman.Cuali$Coronarios, fitted.values(Ajuste.Step))
+
+# Display a summary of the stepwise-selected model again.
+summary(Ajuste.Step)
+
+# Calculate confidence intervals for the model parameters.
+confint.default(Ajuste.Step)
+
+# Exponentiate the confidence intervals for interpretation as odds ratios.
+exp(confint.default(Ajuste.Step))
+
+# Calculate and display the first 10 Pearson residuals from the model.
+residuals(Ajuste.Step, type = "pearson")[1:10]
+
+# Calculate and display the first 10 deviance residuals from the model.
+residuals(Ajuste.Step, type = "deviance")[1:10]
+
+# Calculate and display the first 10 standardized Pearson residuals.
+rstandard(Ajuste.Step, type = "pearson")[1:10]
+
+# Calculate and display the first 10 standardized deviance residuals.
+rstandard(Ajuste.Step, type = "deviance")[1:10]
+
+# Calculate and display the first 10 hat values (leverage values).
+hatvalues(Ajuste.Step)[1:10]
+
+# Calculate and display the first 10 Cook's distance values.
+cooks.distance(Ajuste.Step)[1:10]
+
+# Load the pROC library for ROC curve analysis.
+library(pROC)
+
+# Calculate the ROC curve using actual and fitted values from the stepwise-selected model.
+CurvaROC.Step <- roc(Chapman.Cuali$Coronarios, fitted.values(Ajuste.Step))
+
+# Store the ROC curve calculation.
+CurvaROC.Step
+
+# Plot the ROC curve to evaluate the diagnostic ability of the model.
+plot(CurvaROC.Step)
